@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TURBO RUSH — Yarış Oyunu</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap');
+
+  :root {
+    --neon-red: #ff1a2e;
+    --neon-orange: #ff6a00;
+    --neon-yellow: #ffe600;
+    --dark: #050810;
+    --darker: #020508;
+    --mid: #0d1526;
+    --text: #e8f0ff;
+    --accent: #00c8ff;
+    --grid: rgba(0,200,255,0.05);
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--darker);
+    font-family: 'Rajdhani', sans-serif;
+    color: var(--text);
+    overflow: hidden;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+  }
+
+  /* ── SCREEN MANAGEMENT ── */
+  .screen { display:none; width:100%; height:100vh; align-items:center; justify-content:center; flex-direction:column; }
+  .screen.active { display:flex; }
+
+  /* ── START SCREEN ── */
+  #startScreen {
+    background: radial-gradient(ellipse at 50% 30%, #1a0a00 0%, var(--darker) 70%);
+    position: relative;
+    overflow: hidden;
+  }
+  #startScreen::before {
+    content:'';
+    position:absolute; inset:0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 40px, var(--grid) 40px, var(--grid) 41px),
+                repeating-linear-gradient(90deg, transparent, transparent 40px, var(--grid) 40px, var(--grid) 41px);
+    animation: gridMove 4s linear infinite;
+  }
+  @keyframes gridMove { to { background-position: 0 41px, 41px 0; } }
+
+  .logo-wrap { position:relative; z-index:10; text-align:center; margin-bottom:40px; }
+  .logo-top {
+    font-family:'Orbitron',monospace;
+    font-size: clamp(16px,3vw,22px);
+    letter-spacing: 20px;
+    color: var(--accent);
+    opacity:.7;
+    margin-bottom:8px;
+  }
+  .logo-main {
+    font-family:'Orbitron',monospace;
+    font-size: clamp(52px,10vw,120px);
+    font-weight:900;
+    line-height:.9;
+    background: linear-gradient(135deg, #ff6a00 0%, #ff1a2e 40%, #ffe600 100%);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    background-clip:text;
+    filter: drop-shadow(0 0 40px rgba(255,100,0,.5));
+    animation: pulseLogo 2s ease-in-out infinite alternate;
+  }
+  @keyframes pulseLogo { from{filter:drop-shadow(0 0 30px rgba(255,100,0,.4))} to{filter:drop-shadow(0 0 60px rgba(255,100,0,.9))} }
+  .logo-sub {
+    font-family:'Orbitron',monospace;
+    font-size: clamp(10px,2vw,14px);
+    letter-spacing:8px;
+    color:#888;
+    margin-top:12px;
+  }
+
+  .difficulty-wrap { position:relative; z-index:10; display:flex; gap:16px; margin-bottom:32px; }
+  .diff-btn {
+    font-family:'Orbitron',monospace;
+    font-size:12px;
+    letter-spacing:3px;
+    padding:12px 28px;
+    border:2px solid #333;
+    background:transparent;
+    color:#555;
+    cursor:pointer;
+    transition:all .2s;
+    clip-path: polygon(10px 0%, 100% 0%, calc(100% - 10px) 100%, 0% 100%);
+  }
+  .diff-btn.active, .diff-btn:hover { color:#fff; }
+  .diff-btn.easy.active  { border-color:#00ff88; color:#00ff88; box-shadow:0 0 20px rgba(0,255,136,.3); }
+  .diff-btn.med.active   { border-color:var(--neon-orange); color:var(--neon-orange); box-shadow:0 0 20px rgba(255,106,0,.3); }
+  .diff-btn.hard.active  { border-color:var(--neon-red); color:var(--neon-red); box-shadow:0 0 20px rgba(255,26,46,.3); }
+
+  .start-btn {
+    position:relative; z-index:10;
+    font-family:'Orbitron',monospace;
+    font-size:16px;
+    letter-spacing:6px;
+    padding:18px 60px;
+    background: linear-gradient(135deg, var(--neon-orange), var(--neon-red));
+    border:none;
+    color:#fff;
+    cursor:pointer;
+    clip-path: polygon(16px 0%, 100% 0%, calc(100% - 16px) 100%, 0% 100%);
+    box-shadow: 0 0 40px rgba(255,60,0,.5);
+    transition: all .2s;
+    animation: pulseBtn 1.5s ease-in-out infinite alternate;
+  }
+  @keyframes pulseBtn { from{box-shadow:0 0 30px rgba(255,60,0,.4)} to{box-shadow:0 0 60px rgba(255,60,0,.9)} }
+  .start-btn:hover { transform:scale(1.05); }
+
+  .controls-hint { position:relative; z-index:10; margin-top:36px; display:flex; gap:24px; }
+  .ctrl-key {
+    display:flex; flex-direction:column; align-items:center; gap:8px;
+    font-family:'Rajdhani',sans-serif; font-size:13px; color:#444; letter-spacing:2px;
+  }
+  .key {
+    width:40px; height:40px; border:2px solid #333; display:flex; align-items:center; justify-content:center;
+    font-size:18px; color:#666; border-radius:4px; background:rgba(255,255,255,.03);
+  }
+
+  /* ── GAME CANVAS WRAPPER ── */
+  #gameScreen { position:relative; background:#000; }
+
+  canvas { display:block; }
+
+  /* ── HUD ── */
+  #hud {
+    position:absolute; top:0; left:0; right:0;
+    display:flex; justify-content:space-between; align-items:flex-start;
+    padding:16px 24px;
+    pointer-events:none;
+  }
+  .hud-panel {
+    background: rgba(5,8,16,.8);
+    border:1px solid rgba(0,200,255,.15);
+    padding:10px 20px;
+    backdrop-filter:blur(8px);
+    clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+  }
+  .hud-label { font-family:'Orbitron',monospace; font-size:9px; letter-spacing:3px; color:#446; margin-bottom:2px; }
+  .hud-value { font-family:'Orbitron',monospace; font-size:22px; font-weight:700; color:var(--neon-yellow); }
+  .hud-value.speed-val { color:var(--accent); }
+  .hud-value.lap-val   { color:#fff; }
+
+  /* speed bar */
+  #speedBar {
+    position:absolute; bottom:0; left:50%; transform:translateX(-50%);
+    width:300px; padding-bottom:20px;
+    display:flex; flex-direction:column; align-items:center; gap:6px;
+  }
+  .speed-track {
+    width:100%; height:8px; background:rgba(255,255,255,.08);
+    border-radius:4px; overflow:hidden;
+  }
+  #speedFill {
+    height:100%; width:0%; border-radius:4px;
+    background: linear-gradient(90deg, var(--accent), var(--neon-yellow), var(--neon-red));
+    transition: width .1s;
+    box-shadow: 0 0 12px var(--neon-yellow);
+  }
+  .speed-num {
+    font-family:'Orbitron',monospace; font-size:28px; font-weight:900;
+    color:#fff; line-height:1;
+  }
+  .speed-unit { font-family:'Orbitron',monospace; font-size:11px; letter-spacing:4px; color:#556; }
+
+  /* nitro bar */
+  #nitroBar {
+    position:absolute; bottom:80px; right:24px;
+    width:14px; height:120px;
+    background:rgba(255,255,255,.06);
+    border:1px solid rgba(0,200,255,.2);
+    border-radius:7px; overflow:hidden;
+    display:flex; flex-direction:column; justify-content:flex-end;
+  }
+  #nitroFill {
+    width:100%; height:100%; border-radius:7px;
+    background: linear-gradient(180deg, #00c8ff, #0055ff);
+    box-shadow: 0 0 12px #00c8ff;
+    transition: height .15s;
+  }
+  .nitro-label {
+    position:absolute; bottom:80px; right:44px;
+    font-family:'Orbitron',monospace; font-size:9px; letter-spacing:2px;
+    color:#00c8ff; opacity:.7;
+    writing-mode:vertical-rl; transform:rotate(180deg);
+  }
+
+  /* minimap */
+  #minimap {
+    position:absolute; top:16px; left:50%; transform:translateX(-50%);
+    width:120px; height:30px;
+    background:rgba(5,8,16,.7);
+    border:1px solid rgba(0,200,255,.2);
+    border-radius:4px; overflow:hidden;
+  }
+
+  /* ── GAMEOVER SCREEN ── */
+  #gameoverScreen {
+    background:radial-gradient(ellipse at 50% 50%, #1a0005 0%, var(--darker) 70%);
+    position:relative; overflow:hidden;
+  }
+  #gameoverScreen::before {
+    content:''; position:absolute; inset:0;
+    background:repeating-linear-gradient(0deg,transparent,transparent 40px,var(--grid) 40px,var(--grid) 41px),
+               repeating-linear-gradient(90deg,transparent,transparent 40px,var(--grid) 40px,var(--grid) 41px);
+  }
+  .go-title {
+    font-family:'Orbitron',monospace;
+    font-size:clamp(40px,8vw,90px);
+    font-weight:900;
+    color:var(--neon-red);
+    filter:drop-shadow(0 0 40px rgba(255,26,46,.8));
+    position:relative; z-index:10; text-align:center;
+    animation: glitch 2s infinite;
+  }
+  @keyframes glitch {
+    0%,100%{text-shadow:none}
+    20%{text-shadow:3px 0 var(--accent),-3px 0 var(--neon-red)}
+    40%{text-shadow:-3px 0 var(--accent),3px 0 var(--neon-red)}
+    60%{text-shadow:none}
+  }
+  .go-stats { position:relative; z-index:10; display:flex; gap:32px; margin:32px 0; flex-wrap:wrap; justify-content:center; }
+  .go-stat { text-align:center; }
+  .go-stat-label { font-size:11px; letter-spacing:4px; color:#444; font-family:'Orbitron',monospace; }
+  .go-stat-val { font-family:'Orbitron',monospace; font-size:32px; font-weight:700; color:var(--neon-yellow); }
+  .restart-btn {
+    position:relative; z-index:10;
+    font-family:'Orbitron',monospace; font-size:13px; letter-spacing:5px;
+    padding:16px 50px;
+    background:transparent;
+    border:2px solid var(--neon-red);
+    color:var(--neon-red);
+    cursor:pointer;
+    clip-path:polygon(12px 0%,100% 0%,calc(100% - 12px) 100%,0% 100%);
+    transition:all .2s;
+    margin:8px;
+  }
+  .restart-btn:hover { background:var(--neon-red); color:#fff; box-shadow:0 0 30px rgba(255,26,46,.6); }
+  .menu-btn {
+    position:relative; z-index:10;
+    font-family:'Orbitron',monospace; font-size:13px; letter-spacing:5px;
+    padding:16px 50px;
+    background:transparent;
+    border:2px solid #333;
+    color:#555;
+    cursor:pointer;
+    clip-path:polygon(12px 0%,100% 0%,calc(100% - 12px) 100%,0% 100%);
+    transition:all .2s;
+    margin:8px;
+  }
+  .menu-btn:hover { border-color:#666; color:#999; }
+
+  /* pause overlay */
+  #pauseOverlay {
+    display:none;
+    position:absolute; inset:0; z-index:50;
+    background:rgba(0,0,0,.7);
+    align-items:center; justify-content:center; flex-direction:column;
+    backdrop-filter:blur(6px);
+  }
+  #pauseOverlay.visible { display:flex; }
+  .pause-title {
+    font-family:'Orbitron',monospace;
+    font-size:60px; font-weight:900;
+    color:#fff; letter-spacing:16px;
+    animation:pulseLogo 1s ease-in-out infinite alternate;
+  }
+  .pause-hint { font-family:'Orbitron',monospace; font-size:11px; letter-spacing:4px; color:#444; margin-top:16px; }
+
+  /* countdown */
+  #countdown {
+    position:absolute; inset:0; z-index:60;
+    display:none; align-items:center; justify-content:center;
+    font-family:'Orbitron',monospace;
+    font-size:clamp(80px,20vw,180px);
+    font-weight:900;
+    color:#fff;
+    text-shadow:0 0 80px rgba(255,200,0,.8);
+  }
+  #countdown.visible { display:flex; }
+
+  /* mobile controls */
+  #mobileControls {
+    display:none;
+    position:absolute; bottom:20px; left:0; right:0;
+    justify-content:space-between; padding:0 24px;
+    pointer-events:auto;
+  }
+  .mob-btn {
+    width:70px; height:70px;
+    background:rgba(255,255,255,.08);
+    border:2px solid rgba(255,255,255,.15);
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:28px; cursor:pointer;
+    transition:background .1s;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .mob-btn:active { background:rgba(255,255,255,.2); }
+  .mob-center { display:flex; gap:16px; align-items:center; }
+
+  @media (max-width:600px) {
+    #mobileControls { display:flex; }
+  }
+  @media (pointer:coarse) {
+    #mobileControls { display:flex; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══ START SCREEN ══ -->
+<div id="startScreen" class="screen active">
+  <div class="logo-wrap">
+    <div class="logo-top">AZƏRBAYCAN</div>
+    <div class="logo-main">TURBO<br>RUSH</div>
+    <div class="logo-sub">YARIŞA BAŞLA</div>
+  </div>
+
+  <div class="difficulty-wrap">
+    <button class="diff-btn easy" onclick="setDiff('easy')">ASAN</button>
+    <button class="diff-btn med active" onclick="setDiff('med')">ORTA</button>
+    <button class="diff-btn hard" onclick="setDiff('hard')">ÇƏTİN</button>
+  </div>
+
+  <button class="start-btn" onclick="startGame()">BAŞLA ▶</button>
+
+  <div class="controls-hint">
+    <div class="ctrl-key"><div class="key">←</div>SOL</div>
+    <div class="ctrl-key"><div class="key">→</div>SAĞ</div>
+    <div class="ctrl-key"><div class="key">↑</div>SÜRƏT</div>
+    <div class="ctrl-key"><div class="key">↓</div>ƏYLƏC</div>
+    <div class="ctrl-key"><div class="key">N</div>NİTRO</div>
+    <div class="ctrl-key"><div class="key">P</div>PAUZ</div>
+  </div>
+</div>
+
+<!-- ══ GAME SCREEN ══ -->
+<div id="gameScreen" class="screen">
+  <canvas id="canvas"></canvas>
+
+  <div id="hud">
+    <div class="hud-panel">
+      <div class="hud-label">DÖVR</div>
+      <div class="hud-value lap-val" id="lapDisplay">1 / 3</div>
+    </div>
+    <div style="flex:1"></div>
+    <div class="hud-panel">
+      <div class="hud-label">VAXT</div>
+      <div class="hud-value" id="timeDisplay">0:00.0</div>
+    </div>
+    <div style="flex:1"></div>
+    <div class="hud-panel">
+      <div class="hud-label">MÖVQEYİNİZ</div>
+      <div class="hud-value" id="posDisplay">1 / 5</div>
+    </div>
+  </div>
+
+  <div id="minimap"><canvas id="minimapCanvas" width="120" height="30"></canvas></div>
+
+  <div id="speedBar">
+    <div class="speed-track"><div id="speedFill"></div></div>
+    <div class="speed-num" id="speedNum">0</div>
+    <div class="speed-unit">KM/S</div>
+  </div>
+
+  <div class="nitro-label">NİTRO</div>
+  <div id="nitroBar"><div id="nitroFill"></div></div>
+
+  <div id="pauseOverlay">
+    <div class="pause-title">PAUZ</div>
+    <div class="pause-hint">P — DAVAM ET</div>
+  </div>
+
+  <div id="countdown"></div>
+
+  <div id="mobileControls">
+    <div class="mob-btn" id="btnLeft">◀</div>
+    <div class="mob-center">
+      <div class="mob-btn" id="btnBrake">▼</div>
+      <div class="mob-btn" id="btnNitro">⚡</div>
+      <div class="mob-btn" id="btnAccel">▲</div>
+    </div>
+    <div class="mob-btn" id="btnRight">▶</div>
+  </div>
+</div>
+
+<!-- ══ GAMEOVER SCREEN ══ -->
+<div id="gameoverScreen" class="screen">
+  <div class="go-title" id="goTitle">OYUN BİTDİ</div>
+  <div class="go-stats">
+    <div class="go-stat">
+      <div class="go-stat-label">ÜMUMI VAXT</div>
+      <div class="go-stat-val" id="goTime">—</div>
+    </div>
+    <div class="go-stat">
+      <div class="go-stat-label">ƏN YAXŞI DÖVR</div>
+      <div class="go-stat-val" id="goBestLap">—</div>
+    </div>
+    <div class="go-stat">
+      <div class="go-stat-label">MAX SÜRƏT</div>
+      <div class="go-stat-val" id="goMaxSpeed">—</div>
+    </div>
+    <div class="go-stat">
+      <div class="go-stat-label">NİTRO İSTİFADƏSİ</div>
+      <div class="go-stat-val" id="goNitroCount">—</div>
+    </div>
+  </div>
+  <div style="display:flex;gap:0;flex-wrap:wrap;justify-content:center">
+    <button class="restart-btn" onclick="startGame()">YENİDƏN</button>
+    <button class="menu-btn" onclick="showScreen('startScreen')">MENYU</button>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx    = canvas.getContext('2d');
+const mmCvs  = document.getElementById('minimapCanvas');
+const mmCtx  = mmCvs.getContext('2d');
+
+function resize() {
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resize);
+resize();
+
+let difficulty = 'med';
+const DIFF = {
+  easy: { aiSpeed:0.6, obstacleRate:0.004, totalLaps:3 },
+  med:  { aiSpeed:0.85, obstacleRate:0.007, totalLaps:3 },
+  hard: { aiSpeed:1.1, obstacleRate:0.012, totalLaps:5 }
+};
+function setDiff(d) {
+  difficulty = d;
+  document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector('.diff-btn.'+d).classList.add('active');
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+const TRACK_PTS = [
+  {x:.5,y:.92},{x:.75,y:.9},{x:.9,y:.78},{x:.92,y:.62},{x:.85,y:.48},
+  {x:.72,y:.38},{x:.62,y:.28},{x:.65,y:.15},{x:.5,y:.08},{x:.35,y:.15},
+  {x:.38,y:.28},{x:.28,y:.38},{x:.15,y:.48},{x:.08,y:.62},
+  {x:.1,y:.78},{x:.25,y:.9},{x:.5,y:.92}
+];
+const TRACK_W = 90;
+
+function getTrackPoint(t) {
+  t = ((t % 1) + 1) % 1;
+  const n   = TRACK_PTS.length - 1;
+  const seg = t * n;
+  const i   = Math.floor(seg);
+  const f   = seg - i;
+  const a   = TRACK_PTS[Math.min(i,n-1)];
+  const b   = TRACK_PTS[Math.min(i+1,n-1)];
+  return {
+    x: a.x + (b.x - a.x)*f,
+    y: a.y + (b.y - a.y)*f
+  };
+}
+function trackPx(pt) {
+  return { x: pt.x * canvas.width, y: pt.y * canvas.height };
+}
+
+let game, keys, particles, ai_cars, obstacles, nitroPickups;
+let paused, raceStarted, countdown_val, raceTimer, bestLap, lapStartTime;
+let stats;
+
+keys = {};
+window.addEventListener('keydown', e => {
+  keys[e.key] = true;
+  if (e.key === 'p' || e.key === 'P') togglePause();
+  if (e.key === 'n' || e.key === 'N') useNitro();
+  e.preventDefault();
+});
+window.addEventListener('keyup', e => { keys[e.key] = false; });
+
+function mobPress(key, v) { keys[key] = v; }
+document.getElementById('btnLeft').addEventListener('touchstart',  ()=>mobPress('ArrowLeft',true),  {passive:true});
+document.getElementById('btnLeft').addEventListener('touchend',    ()=>mobPress('ArrowLeft',false), {passive:true});
+document.getElementById('btnRight').addEventListener('touchstart', ()=>mobPress('ArrowRight',true),  {passive:true});
+document.getElementById('btnRight').addEventListener('touchend',   ()=>mobPress('ArrowRight',false), {passive:true});
+document.getElementById('btnAccel').addEventListener('touchstart', ()=>mobPress('ArrowUp',true),  {passive:true});
+document.getElementById('btnAccel').addEventListener('touchend',   ()=>mobPress('ArrowUp',false), {passive:true});
+document.getElementById('btnBrake').addEventListener('touchstart', ()=>mobPress('ArrowDown',true),  {passive:true});
+document.getElementById('btnBrake').addEventListener('touchend',   ()=>mobPress('ArrowDown',false), {passive:true});
+document.getElementById('btnNitro').addEventListener('touchstart', ()=>useNitro(), {passive:true});
+
+class Car {
+  constructor(t, color, isPlayer) {
+    this.t       = t;
+    this.offset  = 0;
+    this.speed   = 0;
+    this.color   = color;
+    this.isPlayer= isPlayer;
+    this.angle   = 0;
+    this.nitro   = isPlayer ? 100 : 0;
+    this.nitroActive = false;
+    this.lapCount= 0;
+    this.crashed = false;
+    this.crashTimer = 0;
+    this.trail   = [];
+  }
+  get pos() {
+    const ctr = getTrackPoint(this.t);
+    const next = getTrackPoint(this.t + 0.001);
+    const dx = next.x - ctr.x, dy = next.y - ctr.y;
+    const len = Math.sqrt(dx*dx+dy*dy)||1;
+    const nx = -dy/len, ny = dx/len;
+    return {
+      x:(ctr.x + nx*this.offset)*canvas.width,
+      y:(ctr.y + ny*this.offset)*canvas.height
+    };
+  }
+}
+
+class Particle {
+  constructor(x,y,vx,vy,color,life,size) {
+    this.x=x;this.y=y;this.vx=vx;this.vy=vy;
+    this.color=color;this.life=life;this.maxLife=life;this.size=size;
+  }
+  update() {
+    this.x+=this.vx; this.y+=this.vy;
+    this.vx*=0.95; this.vy*=0.95;
+    this.life--;
+    return this.life > 0;
+  }
+  draw() {
+    const a = this.life/this.maxLife;
+    ctx.save();
+    ctx.globalAlpha = a;
+    ctx.fillStyle = this.color;
+    ctx.beginPath();
+    ctx.arc(this.x,this.y,this.size*a,0,Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
+function initGame() {
+  const cfg = DIFF[difficulty];
+  paused     = false;
+  raceStarted= false;
+  raceTimer  = 0;
+  bestLap    = Infinity;
+  lapStartTime = 0;
+  particles  = [];
+  obstacles  = [];
+  nitroPickups = [];
+  stats = { maxSpeed:0, nitroCount:0 };
+
+  const player = new Car(0, '#00c8ff', true);
+  player.offset = 0;
+
+  const aiColors = ['#ff1a2e','#ff6a00','#ffe600','#cc44ff'];
+  ai_cars = aiColors.map((c,i) => {
+    const a = new Car(-(i+1)*0.04, c, false);
+    a.aiSpeed = cfg.aiSpeed * (0.9 + Math.random()*0.2);
+    a.offset = (Math.random()-0.5)*30;
+    return a;
+  });
+
+  game = { player, cfg };
+  updateHUD();
+}
+
+let raf;
+function startGame() {
+  showScreen('gameScreen');
+  initGame();
+  let c = 3;
+  const cdEl = document.getElementById('countdown');
+  cdEl.classList.add('visible');
+  cdEl.textContent = c;
+  const tick = setInterval(() => {
+    c--;
+    if(c===0) { cdEl.textContent='GİT!'; }
+    else if(c<0) {
+      clearInterval(tick);
+      cdEl.classList.remove('visible');
+      raceStarted = true;
+      lapStartTime = performance.now();
+      if(raf) cancelAnimationFrame(raf);
+      loop();
+    } else { cdEl.textContent=c; }
+  }, 900);
+}
+
+function useNitro() {
+  if(!game||!raceStarted||paused) return;
+  const p = game.player;
+  if(p.nitro >= 20) {
+    p.nitroActive = true;
+    stats.nitroCount++;
+    setTimeout(()=>{ p.nitroActive=false; }, 1500);
+  }
+}
+
+function togglePause() {
+  if(!raceStarted) return;
+  paused = !paused;
+  document.getElementById('pauseOverlay').classList.toggle('visible', paused);
+  if(!paused) loop();
+}
+
+let lastTime = 0;
+function loop(ts=0) {
+  if(paused) return;
+  const dt = Math.min((ts-lastTime)/16.67, 3);
+  lastTime = ts;
+  update(dt);
+  render();
+  raf = requestAnimationFrame(loop);
+}
+
+function update(dt) {
+  if(!raceStarted) return;
+  raceTimer += dt * 16.67;
+  const p   = game.player;
+  const cfg = game.cfg;
+
+  const maxSpd = p.nitroActive ? 14 : 9;
+  const accel  = 0.35, brake = 0.5, friction = 0.92;
+  const steer  = 4.5;
+
+  if(p.crashed) {
+    p.crashTimer -= dt;
+    if(p.crashTimer <= 0) { p.crashed=false; p.speed*=0.3; }
+    p.speed *= 0.85;
+  } else {
+    if(keys['ArrowUp'])   p.speed = Math.min(p.speed + accel*dt, maxSpd);
+    if(keys['ArrowDown']) p.speed = Math.max(p.speed - brake*dt, -3);
+    if(keys['ArrowLeft']) p.offset -= steer*dt * (p.speed/maxSpd*0.7+0.3);
+    if(keys['ArrowRight'])p.offset += steer*dt * (p.speed/maxSpd*0.7+0.3);
+    p.speed *= Math.pow(friction, dt);
+  }
+
+  if(p.nitroActive) {
+    p.nitro = Math.max(0, p.nitro - 1.5*dt);
+    if(p.nitro<=0) p.nitroActive=false;
+    const pos = p.pos;
+    for(let i=0;i<3;i++) {
+      particles.push(new Particle(pos.x,pos.y, (Math.random()-0.5)*5-p.speed*2, (Math.random()-0.5)*5, `hsl(${180+Math.random()*60},100%,60%)`, 20+Math.random()*15, 4+Math.random()*4));
+    }
+  } else {
+    p.nitro = Math.min(100, p.nitro + 0.18*dt);
+  }
+
+  p.t += p.speed * 0.00065 * dt;
+  if(p.t >= 1) { p.t-=1; completeLap(p); }
+
+  if(Math.abs(p.offset) > TRACK_W*0.5) {
+    p.offset = Math.sign(p.offset)*TRACK_W*0.5;
+    p.speed *= 0.88;
+  }
+
+  const c0 = getTrackPoint(p.t), c1 = getTrackPoint(p.t+0.005);
+  p.angle = Math.atan2((c1.y-c0.y)*canvas.height,(c1.x-c0.x)*canvas.width);
+  stats.maxSpeed = Math.max(stats.maxSpeed, Math.abs(p.speed));
+
+  ai_cars.forEach(ai => {
+    ai.speed = ai.aiSpeed * 6;
+    ai.t += ai.aiSpeed * 0.0006 * dt;
+    if(ai.t >= 1) { ai.t-=1; ai.lapCount++; }
+    ai.offset += (Math.random()-0.5)*1.5*dt;
+    const ac0 = getTrackPoint(ai.t), ac1 = getTrackPoint(ai.t+0.005);
+    ai.angle = Math.atan2((ac1.y-ac0.y)*canvas.height,(ac1.x-ac0.x)*canvas.width);
+  });
+
+  if(Math.random() < cfg.obstacleRate*dt) {
+    obstacles.push({ t:Math.random(), offset:(Math.random()-0.5)*50, type:Math.random()<0.5?'cone':'oil' });
+  }
+  obstacles.forEach((ob,i) => {
+    const op = trackPx(getTrackPoint(ob.t));
+    const pp = p.pos;
+    if(Math.sqrt((pp.x-op.x)**2+(pp.y-op.y)**2) < 28) {
+      obstacles.splice(i,1);
+      if(ob.type==='cone') { p.speed *= 0.4; p.crashed=true; p.crashTimer=40; spawnCrash(pp); } else { p.speed *= 0.6; }
+    }
+  });
+
+  particles = particles.filter(p2 => p2.update());
+  updateHUD();
+}
+
+function completeLap(car) {
+  if(!car.isPlayer) return;
+  const lapTime = performance.now() - lapStartTime;
+  lapStartTime = performance.now();
+  if(lapTime < bestLap) bestLap = lapTime;
+  car.lapCount++;
+  if(car.lapCount >= game.cfg.totalLaps) endRace(true);
+}
+
+function endRace(won) {
+  cancelAnimationFrame(raf);
+  raceStarted = false;
+  const fmtTime = ms => { const s = ms/1000; return `${Math.floor(s/60)}:${(s%60).toFixed(1).padStart(4,'0')}`; };
+  document.getElementById('goTime').textContent = fmtTime(raceTimer);
+  document.getElementById('goBestLap').textContent = bestLap===Infinity?'—':fmtTime(bestLap);
+  document.getElementById('goMaxSpeed').textContent= Math.round(stats.maxSpeed*22)+' km/s';
+  showScreen('gameoverScreen');
+}
+
+function updateHUD() {
+  if(!game) return;
+  const p   = game.player;
+  document.getElementById('lapDisplay').textContent = `${p.lapCount+1} / ${game.cfg.totalLaps}`;
+  const s = raceTimer/1000;
+  document.getElementById('timeDisplay').textContent = `${Math.floor(s/60)}:${(s%60).toFixed(1).padStart(4,'0')}`;
+  const spd = Math.abs(p.speed) / 14 * 100;
+  document.getElementById('speedFill').style.width = spd+'%';
+  document.getElementById('speedNum').textContent  = Math.round(Math.abs(p.speed)*22);
+  document.getElementById('nitroFill').style.height = p.nitro+'%';
+}
+
+function render() {
+  ctx.fillStyle = '#040608'; ctx.fillRect(0,0,canvas.width,canvas.height);
+  drawTrack();
+  drawParticles();
+  [...ai_cars, game.player].forEach(car => drawCar(car));
+}
+
+function drawTrack() {
+  const N = 200;
+  ctx.strokeStyle='#1a1f2e'; ctx.lineWidth=TRACK_W; ctx.lineCap='round'; ctx.beginPath();
+  for(let i=0;i<=N;i++) { const p = trackPx(getTrackPoint(i/N)); i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y); }
+  ctx.closePath(); ctx.stroke();
+}
+
+function drawCar(car) {
+  const pos = car.pos;
+  ctx.save(); ctx.translate(pos.x, pos.y); ctx.rotate(car.angle);
+  ctx.fillStyle = car.color; ctx.fillRect(-9,-16,18,32);
+  ctx.restore();
+}
+
+function drawParticles() { particles.forEach(p2 => p2.draw()); }
+function spawnCrash(pos) { for(let i=0;i<15;i++) particles.push(new Particle(pos.x,pos.y,(Math.random()-0.5)*8,(Math.random()-0.5)*8,'#ff6a00',30,6)); }
+
+showScreen('startScreen');
+</script>
+</body>
+</html>

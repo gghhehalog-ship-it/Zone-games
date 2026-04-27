@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mənim Bazarım 🛒</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap');
+:root {
+  --bg:#0f1117; --panel:#181c27; --card:#1e2535;
+  --accent:#ff5c7a; --gold:#ffbe3d; --green:#2edf9f;
+  --blue:#5bc8f5; --purple:#b388ff; --orange:#ff9f43;
+  --text:#f0f2f8; --text2:#9ba3b8;
+  --border:rgba(255,255,255,0.1); --shadow:rgba(0,0,0,0.4);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:15px;line-height:1.5;
+  background-image:radial-gradient(ellipse at 20% 20%,rgba(255,92,122,0.07) 0%,transparent 40%),radial-gradient(ellipse at 80% 80%,rgba(91,200,245,0.05) 0%,transparent 40%);}
+
+/* TOPBAR */
+#topbar{background:rgba(14,20,40,0.97);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);
+  padding:0 16px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;}
+.logo{font-size:1.25rem;font-weight:800;color:var(--gold);}
+.top-stats{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.chip{background:rgba(255,255,255,0.07);border:1px solid var(--border);border-radius:20px;padding:4px 12px;
+  font-size:0.88rem;font-weight:600;display:flex;align-items:center;gap:4px;}
+.chip.gold{background:rgba(255,190,61,0.14);border-color:rgba(255,190,61,0.3);color:var(--gold);}
+.chip.green{background:rgba(46,223,159,0.1);border-color:rgba(46,223,159,0.3);color:var(--green);}
+.chip.blue{background:rgba(91,200,245,0.1);border-color:rgba(91,200,245,0.25);color:var(--blue);}
+.chip.purple{background:rgba(179,136,255,0.12);border-color:rgba(179,136,255,0.3);color:var(--purple);}
+
+/* REP BAR */
+#rep-bar-wrap{background:rgba(255,255,255,0.04);border-bottom:1px solid var(--border);padding:6px 16px;
+  display:flex;align-items:center;gap:10px;max-width:960px;margin:0 auto;width:100%;}
+#rep-bar-outer{flex:1;height:8px;background:rgba(255,255,255,0.08);border-radius:6px;overflow:hidden;}
+#rep-bar-inner{height:100%;background:linear-gradient(90deg,var(--gold),var(--green));border-radius:6px;transition:width 0.5s ease;}
+.rep-label{font-size:0.78rem;color:var(--text2);white-space:nowrap;font-weight:600;}
+.rep-title{font-size:0.82rem;font-weight:700;color:var(--gold);min-width:90px;}
+
+/* TABS */
+#tabs-wrap{max-width:960px;margin:0 auto;padding:14px 14px 0;}
+#tabs{display:flex;gap:0;}
+.tab-btn{flex:1;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-bottom:none;
+  color:var(--text2);padding:10px 0;font-family:'Outfit',sans-serif;font-size:0.95rem;font-weight:700;
+  cursor:pointer;transition:all 0.2s;border-radius:12px 12px 0 0;letter-spacing:0.3px;}
+.tab-btn:hover{background:rgba(255,255,255,0.08);color:var(--text);}
+.tab-btn.active{background:var(--panel);border-color:rgba(255,255,255,0.12);color:var(--gold);}
+
+/* MAIN */
+#main{max-width:960px;margin:0 auto;background:var(--panel);border:1px solid rgba(255,255,255,0.12);
+  border-top:none;border-radius:0 0 20px 20px;padding:18px;margin-bottom:24px;}
+.tab-panel{display:none;}
+.tab-panel.active{display:block;animation:fadeIn 0.28s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+
+/* SELL LAYOUT */
+.sell-grid{display:grid;grid-template-columns:1fr 320px;gap:14px;}
+
+/* CUSTOMER CARD */
+#cust-card{background:var(--card);border-radius:16px;padding:16px;border:1px solid var(--border);
+  display:flex;gap:14px;align-items:flex-start;margin-bottom:14px;min-height:110px;
+  transition:all 0.35s;position:relative;overflow:hidden;}
+#cust-card.vip-card{border-color:rgba(255,190,61,0.4);box-shadow:0 0 20px rgba(255,190,61,0.1);}
+#cust-card.police-card{border-color:rgba(91,200,245,0.4);box-shadow:0 0 20px rgba(91,200,245,0.1);}
+.cust-emo{font-size:2.8rem;line-height:1;animation:float 2.5s ease-in-out infinite;flex-shrink:0;}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+.cust-info{flex:1;min-width:0;}
+.cust-name{font-size:1.05rem;color:var(--accent);font-weight:800;margin-bottom:4px;}
+.cust-name .vip-badge{background:var(--gold);color:#1a0e00;font-size:0.65rem;padding:1px 7px;border-radius:8px;font-weight:900;margin-left:6px;vertical-align:middle;}
+.cust-name .police-badge{background:var(--blue);color:#001a2e;font-size:0.65rem;padding:1px 7px;border-radius:8px;font-weight:900;margin-left:6px;vertical-align:middle;}
+.cust-name .friend-badge{background:var(--purple);color:#1a0030;font-size:0.65rem;padding:1px 7px;border-radius:8px;font-weight:900;margin-left:6px;vertical-align:middle;}
+.cust-say{font-size:0.95rem;color:var(--text);font-weight:500;line-height:1.5;}
+.cust-meta{margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;}
+.cust-tag{font-size:0.8rem;padding:3px 10px;border-radius:9px;font-weight:700;}
+.cust-tag.budget{background:rgba(46,223,159,0.12);color:var(--green);border:1px solid rgba(46,223,159,0.25);}
+.cust-tag.wants{background:rgba(91,200,245,0.1);color:var(--blue);border:1px solid rgba(91,200,245,0.2);}
+.cust-tag.qty{background:rgba(255,190,61,0.12);color:var(--gold);border:1px solid rgba(255,190,61,0.25);}
+.cust-tag.rep{background:rgba(179,136,255,0.12);color:var(--purple);border:1px solid rgba(179,136,255,0.25);}
+
+/* SECTION TITLE */
+.section-title{font-size:0.74rem;color:var(--text2);margin-bottom:10px;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;}
+
+/* SHOPPING LIST */
+#shopping-list{margin-bottom:14px;}
+.shop-item-row{background:var(--bg);border:1.5px solid var(--border);border-radius:12px;padding:10px 12px;
+  margin-bottom:8px;display:flex;align-items:center;gap:10px;transition:border-color 0.2s;}
+.shop-item-row.done{border-color:rgba(46,223,159,0.4);background:rgba(46,223,159,0.05);}
+.shop-item-row.skipped{opacity:0.45;border-color:rgba(255,92,122,0.3);}
+.shop-emo{font-size:1.6rem;flex-shrink:0;}
+.shop-info{flex:1;}
+.shop-name{font-size:0.9rem;font-weight:700;color:var(--text);}
+.shop-need{font-size:0.78rem;color:var(--text2);}
+.shop-status{font-size:1.2rem;flex-shrink:0;}
+.shop-sell-btn{background:linear-gradient(135deg,var(--green),#00b87a);color:#082416;border:none;
+  border-radius:9px;padding:6px 14px;font-family:'Outfit',sans-serif;font-size:0.85rem;font-weight:800;
+  cursor:pointer;transition:all 0.15s;white-space:nowrap;}
+.shop-sell-btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(46,223,159,0.3);}
+.shop-sell-btn:disabled{background:rgba(255,255,255,0.1);color:var(--text2);cursor:not-allowed;transform:none;box-shadow:none;}
+.shop-price-inp{width:64px;background:rgba(255,255,255,0.07);border:1px solid var(--border);border-radius:8px;
+  color:var(--text);text-align:center;font-family:'Outfit',sans-serif;font-size:0.9rem;font-weight:700;padding:5px 4px;outline:none;}
+.shop-price-inp:focus{border-color:var(--green);}
+
+/* INVENTORY GRID */
+.inv-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;}
+.inv-card{background:var(--bg);border:1.5px solid var(--border);border-radius:11px;padding:9px 7px;
+  text-align:center;position:relative;}
+.inv-card.highlight{border-color:rgba(255,190,61,0.5);background:rgba(255,190,61,0.05);}
+.inv-emo{font-size:1.7rem;display:block;margin-bottom:3px;}
+.inv-name{font-size:0.78rem;font-weight:700;color:var(--text);}
+.inv-cost{font-size:0.7rem;color:var(--text2);margin-top:1px;}
+.inv-qty-badge{position:absolute;top:4px;right:4px;background:var(--accent);color:white;
+  border-radius:7px;font-size:0.62rem;padding:1px 5px;font-weight:900;}
+.inv-qty-badge.low{background:var(--gold);}
+.inv-qty-badge.zero{background:#444;color:#888;}
+
+/* SELL PANEL RIGHT */
+.sell-panel{display:flex;flex-direction:column;gap:12px;}
+.panel-box{background:var(--card);border-radius:14px;padding:14px;border:1px solid var(--border);}
+
+/* BARGAIN SECTION */
+.bargain-box{background:rgba(255,159,67,0.08);border:1px solid rgba(255,159,67,0.2);border-radius:12px;padding:12px 14px;}
+.bargain-title{font-size:0.78rem;color:var(--orange);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
+.bargain-row{display:flex;gap:8px;align-items:center;}
+.bargain-inp{flex:1;background:rgba(255,255,255,0.07);border:1px solid var(--border);border-radius:8px;
+  color:var(--text);text-align:center;font-family:'Outfit',sans-serif;font-size:1rem;font-weight:700;padding:7px;outline:none;}
+.bargain-inp:focus{border-color:var(--orange);}
+.bargain-btn{background:linear-gradient(135deg,var(--orange),#e07b00);color:#1a0e00;border:none;
+  border-radius:9px;padding:8px 14px;font-family:'Outfit',sans-serif;font-size:0.9rem;font-weight:800;cursor:pointer;transition:all 0.15s;}
+.bargain-btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(255,159,67,0.3);}
+.bargain-hint{font-size:0.78rem;color:var(--text2);margin-top:6px;line-height:1.4;}
+
+/* RESULT MSG */
+#result-msg{border-radius:11px;padding:10px 14px;font-weight:600;font-size:0.9rem;text-align:center;
+  display:none;animation:popIn 0.25s ease;line-height:1.4;}
+@keyframes popIn{from{transform:scale(0.88);opacity:0}to{transform:scale(1);opacity:1}}
+.res-ok{display:block!important;background:rgba(46,223,159,0.1);color:#5dffc0;border:1px solid rgba(46,223,159,0.25);}
+.res-bad{display:block!important;background:rgba(255,92,122,0.1);color:#ff7b96;border:1px solid rgba(255,92,122,0.25);}
+.res-info{display:block!important;background:rgba(255,190,61,0.08);color:#ffd166;border:1px solid rgba(255,190,61,0.2);}
+
+#btn-skip{background:rgba(255,255,255,0.05);border:1px solid var(--border);color:var(--text2);
+  border-radius:11px;padding:10px;font-family:'Outfit',sans-serif;font-size:0.9rem;font-weight:600;
+  cursor:pointer;width:100%;transition:all 0.2s;}
+#btn-skip:hover{background:rgba(255,255,255,0.09);color:var(--text);}
+
+/* DONE BTN */
+#btn-done{background:linear-gradient(135deg,var(--green),#00b87a);color:#082416;border:none;border-radius:12px;
+  padding:13px;font-family:'Outfit',sans-serif;font-size:1.05rem;font-weight:800;cursor:pointer;width:100%;
+  transition:all 0.2s;box-shadow:0 4px 14px rgba(46,223,159,0.25);}
+#btn-done:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(46,223,159,0.35);}
+
+/* LOG */
+#log-area{background:rgba(0,0,0,0.25);border-radius:11px;padding:10px 12px;max-height:130px;overflow-y:auto;border:1px solid var(--border);}
+.log-line{font-size:0.82rem;color:var(--text2);padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.04);
+  display:flex;align-items:center;gap:6px;font-weight:500;line-height:1.4;}
+.log-line:last-child{border:none;}
+
+/* RELATIONSHIP TAB */
+.rel-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;}
+.rel-card{background:var(--card);border:1.5px solid var(--border);border-radius:14px;padding:14px;transition:all 0.2s;}
+.rel-card:hover{border-color:rgba(255,190,61,0.3);transform:translateY(-2px);}
+.rel-card.vip{border-color:rgba(255,190,61,0.35);}
+.rel-card.friend{border-color:rgba(179,136,255,0.35);}
+.rel-header{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.rel-emo{font-size:2rem;}
+.rel-name{font-weight:800;font-size:0.95rem;color:var(--text);}
+.rel-type{font-size:0.72rem;color:var(--text2);font-weight:600;}
+.rel-bar-outer{height:7px;background:rgba(255,255,255,0.08);border-radius:5px;overflow:hidden;margin-bottom:4px;}
+.rel-bar-inner{height:100%;border-radius:5px;transition:width 0.5s ease;}
+.rel-bar-inner.love{background:linear-gradient(90deg,#ff5c7a,#ff9f43);}
+.rel-bar-inner.trust{background:linear-gradient(90deg,var(--blue),var(--purple));}
+.rel-stats{display:flex;justify-content:space-between;font-size:0.75rem;color:var(--text2);font-weight:600;}
+.rel-discount{font-size:0.78rem;color:var(--green);margin-top:6px;font-weight:700;}
+.rel-visits{font-size:0.73rem;color:var(--text2);margin-top:3px;}
+
+/* MARKET TAB */
+.market-intro{background:rgba(255,190,61,0.07);border:1px solid rgba(255,190,61,0.18);border-radius:11px;
+  padding:12px 14px;font-size:0.9rem;color:var(--gold);margin-bottom:14px;font-weight:500;line-height:1.5;}
+.market-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px;}
+.market-card{background:var(--card);border:1.5px solid var(--border);border-radius:14px;padding:14px 10px;
+  text-align:center;transition:all 0.2s;position:relative;overflow:hidden;}
+.market-buy-btn{background:linear-gradient(135deg,var(--gold),#d4881c);color:#1a0e00;border:none;
+  border-radius:7px;padding:5px 11px;font-family:'Outfit',sans-serif;font-size:0.82rem;font-weight:800;
+  cursor:pointer;transition:all 0.15s;white-space:nowrap;}
+
+/* TOAST */
+.market-toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--green);color:#082416;border-radius:28px;padding:10px 22px;
+  font-family:'Outfit',sans-serif;font-size:0.92rem;font-weight:700;pointer-events:none;
+  opacity:0;transition:all 0.32s;z-index:999;box-shadow:0 8px 22px rgba(0,0,0,0.3);}
+.market-toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.market-toast.error{background:var(--accent);color:white;}
+
+/* PAYMENT OVERLAY */
+#pay-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.72);z-index:500;
+  display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+#pay-overlay.show{display:flex;}
+.pay-box{background:var(--panel);border:1px solid rgba(46,223,159,0.3);border-radius:22px;
+  padding:28px 36px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.5),0 0 40px rgba(46,223,159,0.12);
+  animation:popIn 0.32s ease;min-width:270px;}
+
+/* END SCREEN */
+#end-screen{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.82);z-index:600;
+  align-items:center;justify-content:center;backdrop-filter:blur(6px);}
+#end-screen.show{display:flex;}
+.end-card{background:var(--panel);border:1px solid rgba(255,190,61,0.3);border-radius:22px;padding:32px 38px;
+  text-align:center;max-width:380px;width:90%;animation:popIn 0.38s ease;box-shadow:0 20px 60px rgba(0,0,0,0.5);}
+
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.12);border-radius:3px;}
+
+@media(max-width:640px){
+  .sell-grid{grid-template-columns:1fr;}
+  .market-grid{grid-template-columns:repeat(2,1fr);}
+  .rel-grid{grid-template-columns:repeat(2,1fr);}
+}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div id="topbar">
+  <div class="logo">🏪 Mənim Bazarım</div>
+  <div class="top-stats">
+    <div class="chip blue">📅 Gün <span id="day-num">1</span></div>
+    <div class="chip gold">💰 <span id="money-top">50</span> ₼</div>
+    <div class="chip green">⭐ <span id="score-top">0</span></div>
+    <div class="chip purple">👥 <span id="cust-count">8</span></div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="main" style="margin-top:20px">
+  <div id="rep-bar-wrap">
+    <div class="rep-title" id="rep-title">Naməlum</div>
+    <div id="rep-bar-outer"><div id="rep-bar-inner" style="width:10%"></div></div>
+    <div class="rep-label">Şöhrət: <span id="rep-val">10</span>/100</div>
+  </div>
+
+  <div id="tabs-wrap">
+    <div id="tabs">
+      <button class="tab-btn active" onclick="switchTab('sell')">🛒 Satış</button>
+      <button class="tab-btn" onclick="switchTab('relations')">❤️ Münasibətlər</button>
+      <button class="tab-btn" onclick="switchTab('market')">🏬 Topdan</button>
+    </div>
+  </div>
+
+  <div class="tab-panel active" id="tab-sell">
+    <div class="sell-grid">
+      <div>
+        <div id="cust-card">
+          <div class="cust-emo" id="cust-emo">🧑</div>
+          <div class="cust-info">
+            <div class="cust-name" id="cust-name">Müştəri gəlir...</div>
+            <div class="cust-say" id="cust-say">Bazara xoş gəlmisiniz!</div>
+            <div class="cust-meta">
+              <span class="cust-tag budget" id="cust-budget"></span>
+              <span class="cust-tag wants" id="cust-wants"></span>
+            </div>
+          </div>
+        </div>
+        <div id="shopping-list"></div>
+        <div class="inv-grid" id="inv-grid"></div>
+        <div id="log-area" style="margin-top:20px"></div>
+      </div>
+      <div class="sell-panel">
+        <div class="panel-box" id="sell-summary">Müştəri gözlənilir...</div>
+        <div id="result-msg"></div>
+        <button id="btn-done" onclick="finishSale()" style="display:none; width:100%; padding:15px; background:var(--green); border:none; border-radius:10px; font-weight:bold; cursor:pointer">✅ Satışı Tamamla</button>
+        <button id="btn-skip" onclick="skipCustomer()" style="width:100%; padding:10px; background:transparent; border:1px solid var(--border); color:var(--text2); cursor:pointer; margin-top:10px">⏭ Növbəti</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="tab-relations">
+    <div class="rel-grid" id="rel-grid"></div>
+  </div>
+
+  <div class="tab-panel" id="tab-market">
+    <div class="market-intro">Cari pulun: <strong id="mkt-money">50</strong> ₼</div>
+    <div class="market-grid" id="market-grid"></div>
+  </div>
+</div>
+
+<div id="pay-overlay">
+  <div class="pay-box">
+    <div class="pay-amount" id="pay-amount">+0 ₼</div>
+    <button onclick="closePayment()" style="background:var(--green); border:none; padding:10px 20px; border-radius:8px; cursor:pointer">Davam et</button>
+  </div>
+</div>
+
+<div id="end-screen">
+  <div class="end-card">
+    <div class="end-title">Gün Bitti!</div>
+    <div class="end-money" id="end-money">0 ₼</div>
+    <button onclick="restart()" style="background:var(--gold); border:none; padding:15px 30px; border-radius:12px; font-weight:bold; cursor:pointer">Növbəti Gün</button>
+  </div>
+</div>
+
+<script>
+const ALL_ITEMS = [
+  {id:'alma', emoji:'🍎', name:'Alma', cost:1},
+  {id:'nan', emoji:'🍞', name:'Çörək', cost:2},
+  {id:'sut', emoji:'🥛', name:'Süd', cost:3},
+  {id:'pendir', emoji:'🧀', name:'Pendir', cost:5},
+  {id:'toyuq', emoji:'🍗', name:'Toyuq', cost:8}
+];
+
+const CUSTOMERS = [
+  {id:'c1', name:'Aysel', emo:'👩', wantList:[{id:'alma',qty:2,min:2,max:5}], budget:20, msg:'Səlam!'},
+  {id:'c2', name:'Rauf', emo:'👨', wantList:[{id:'nan',qty:3,min:3,max:6}], budget:30, msg:'Çörək varmı?'},
+  {id:'c3', name:'Polis', emo:'👮', type:'police', wantList:[{id:'toyuq',qty:1,min:10,max:15}], budget:50, msg:'Yoxlama!'}
+];
+
+let S = { money:50, score:0, day:1, sold:0, rep:10, customersLeft:5, inventory:[] };
+let RELATIONS = {};
+
+function switchTab(t) {
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-'+t).classList.add('active');
+  if(t==='market') renderMarket();
+  if(t==='relations') renderRelations();
+}
+
+function spawn() {
+  if(S.customersLeft<=0) { end(); return; }
+  let c = CUSTOMERS[Math.floor(Math.random()*CUSTOMERS.length)];
+  S.current = c;
+  S.shopList = c.wantList.map(w=>({...w, done:false}));
+  S.customersLeft--;
+  renderSell();
+}
+
+function renderSell() {
+  let c = S.current;
+  document.getElementById('cust-name').textContent = c.name;
+  document.getElementById('cust-emo').textContent = c.emo;
+  document.getElementById('cust-say').textContent = c.msg;
+  document.getElementById('cust-budget').textContent = 'Büdcə: '+c.budget+'₼';
+  
+  let list = document.getElementById('shopping-list');
+  list.innerHTML = '';
+  S.shopList.forEach((si,i)=>{
+    let row = document.createElement('div');
+    row.style.background = '#1e2535';
+    row.style.padding = '10px';
+    row.style.marginBottom = '5px';
+    row.style.borderRadius = '8px';
+    row.innerHTML = `<span style="font-size:1.5rem">${ALL_ITEMS.find(x=>x.id===si.id).emoji}</span> <b>${si.qty} ədəd</b> 
+    <button onclick="sell(${i})" style="float:right; background:var(--green); border:none; padding:5px 10px; border-radius:5px; cursor:pointer">Sat</button>`;
+    list.appendChild(row);
+  });
+}
+
+function sell(i) {
+  let si = S.shopList[i];
+  let inv = S.inventory.find(x=>x.id===si.id);
+  if(!inv || inv.stock < si.qty) { alert('Anbarda yoxdur!'); return; }
+  inv.stock -= si.qty;
+  si.done = true;
+  let price = si.max;
+  S.money += price * si.qty;
+  document.getElementById('btn-done').style.display = 'block';
+  renderSell();
+}
+
+function finishSale() {
+  document.getElementById('pay-amount').textContent = '+... ₼';
+  document.getElementById('pay-overlay').classList.add('show');
+}
+
+function closePayment() {
+  document.getElementById('pay-overlay').classList.remove('show');
+  spawn();
+}
+
+function renderMarket() {
+  let g = document.getElementById('market-grid');
+  g.innerHTML = '';
+  ALL_ITEMS.forEach(it=>{
+    let d = document.createElement('div');
+    d.style.background = '#1e2535';
+    d.style.padding = '15px';
+    d.style.textAlign = 'center';
+    d.style.borderRadius = '12px';
+    d.innerHTML = `${it.emoji}<br>${it.name}<br>${it.cost}₼<br><button onclick="buy('${it.id}')" style="background:var(--gold); border:none; padding:5px 10px; margin-top:5px; border-radius:5px; cursor:pointer">Al</button>`;
+    g.appendChild(d);
+  });
+}
+
+function buy(id) {
+  let it = ALL_ITEMS.find(x=>x.id===id);
+  if(S.money < it.cost*5) return;
+  S.money -= it.cost*5;
+  let inv = S.inventory.find(x=>x.id===id);
+  if(inv) inv.stock += 5; else S.inventory.push({id, stock:5});
+  switchTab('market');
+}
+
+function end() { document.getElementById('end-money').textContent = S.money+'₼'; document.getElementById('end-screen').classList.add('show'); }
+function restart() { S.day++; S.customersLeft=5; document.getElementById('end-screen').classList.remove('show'); spawn(); }
+
+S.inventory = ALL_ITEMS.map(i=>({...i, stock:5}));
+spawn();
+</script>
+</body>
+</html>

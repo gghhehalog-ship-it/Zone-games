@@ -1,0 +1,6 @@
+{
+  "name": "ZonePlay",
+  "description": "Premium gaming portal for discovering and playing the best web games with friends. Multi-category search and high-performance game grid.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["gaming", "multiplayer", "content-discovery"]
+}
